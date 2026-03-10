@@ -1,5 +1,7 @@
 ﻿Imports System.ComponentModel.DataAnnotations
+Imports System.ComponentModel.DataAnnotations.Schema
 
+<Table("Personne")>
 Public Class Person
     Public Property Id As Integer
 

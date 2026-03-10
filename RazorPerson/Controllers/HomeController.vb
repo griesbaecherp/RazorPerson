@@ -4,16 +4,12 @@ Imports RazorPerson
 Public Class HomeController
     Inherits Controller
 
-    ' Liste partagée en mémoire
-    Shared liste As New List(Of Person) From {
-        New Person() With {.Id = 1, .Name = "Pierre", .Age = 30},
-        New Person() With {.Id = 2, .Name = "Jacques", .Age = 25},
-        New Person() With {.Id = 3, .Name = "Paul", .Age = 40}
-    }
+    Private ReadOnly _repo As New PersonRepository()
 
     ' READ
     Public Function Index() As ActionResult
-        Return View(liste)
+        ViewBag.Title = "Liste des personnes"
+        Return View(_repo.GetAll())
     End Function
 
     ' CREATE - affiche le formulaire
@@ -25,8 +21,7 @@ Public Class HomeController
     <HttpPost>
     Public Function Create(p As Person) As ActionResult
         If ModelState.IsValid Then
-            p.Id = liste.Max(Function(x) x.Id) + 1
-            liste.Add(p)
+            _repo.Insert(p)
             Return RedirectToAction("Index")
         End If
         Return View(p)
@@ -34,17 +29,14 @@ Public Class HomeController
 
     ' EDIT - affiche le formulaire
     Public Function Edit(id As Integer) As ActionResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        Return View(p)
+        Return View(_repo.GetById(id))
     End Function
 
     ' EDIT - traite le formulaire
     <HttpPost>
     Public Function Edit(p As Person) As ActionResult
         If ModelState.IsValid Then
-            Dim existing = liste.FirstOrDefault(Function(x) x.Id = p.Id)
-            existing.Name = p.Name
-            existing.Age = p.Age
+            _repo.Update(p)
             Return RedirectToAction("Index")
         End If
         Return View(p)
@@ -52,16 +44,14 @@ Public Class HomeController
 
     ' DELETE - affiche la confirmation
     Public Function Delete(id As Integer) As ActionResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        Return View(p)
+        Return View(_repo.GetById(id))
     End Function
 
     ' DELETE - effectue la suppression
     <HttpPost>
     <ActionName("Delete")>
     Public Function DeleteConfirmed(id As Integer) As ActionResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        liste.Remove(p)
+        _repo.Delete(id)
         Return RedirectToAction("Index")
     End Function
 
@@ -69,89 +59,81 @@ Public Class HomeController
     Public Function IndexAjax() As ActionResult
         Return View()
     End Function
-    ' Affiche la vue Ajax
+
+    ' Affiche la vue Ajax Toast
     Public Function IndexAjaxToast() As ActionResult
         Return View()
     End Function
 
     ' Retourne la liste en JSON
     Public Function GetPersonnes() As JsonResult
-        Return Json(liste, JsonRequestBehavior.AllowGet)
+        Return Json(_repo.GetAll(), JsonRequestBehavior.AllowGet)
     End Function
+
     ' DELETE en AJAX
     <HttpPost>
     Public Function DeleteAjax(id As Integer) As JsonResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        liste.Remove(p)
+        _repo.Delete(id)
         Return Json(New With {.success = True})
     End Function
 
     ' CREATE en AJAX
     <HttpPost>
     Public Function CreateAjax(p As Person) As JsonResult
-        p.Id = liste.Max(Function(x) x.Id) + 1
-        liste.Add(p)
+        _repo.Insert(p)
         Return Json(New With {.success = True})
     End Function
 
     ' EDIT en AJAX
     <HttpPost>
     Public Function EditAjax(p As Person) As JsonResult
-        Dim existing = liste.FirstOrDefault(Function(x) x.Id = p.Id)
-        existing.Name = p.Name
-        existing.Age = p.Age
+        _repo.Update(p)
         Return Json(New With {.success = True})
     End Function
 
-    ' CREATE Partial - affiche le formulaire
+    ' CREATE Partial
     Public Function CreatePartial() As ActionResult
         Return View()
     End Function
 
-    ' CREATE Partial - traite le formulaire
     <HttpPost>
     Public Function CreatePartial(p As Person) As ActionResult
         If ModelState.IsValid Then
-            p.Id = liste.Max(Function(x) x.Id) + 1
-            liste.Add(p)
+            _repo.Insert(p)
             Return RedirectToAction("Index")
         End If
         Return View(p)
     End Function
 
-    ' EDIT Partial - affiche le formulaire
+    ' EDIT Partial
     Public Function EditPartial(id As Integer) As ActionResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        Return View(p)
+        Return View(_repo.GetById(id))
     End Function
 
-    ' EDIT Partial - traite le formulaire
     <HttpPost>
     Public Function EditPartial(p As Person) As ActionResult
         If ModelState.IsValid Then
-            Dim existing = liste.FirstOrDefault(Function(x) x.Id = p.Id)
-            existing.Name = p.Name
-            existing.Age = p.Age
+            _repo.Update(p)
             Return RedirectToAction("Index")
         End If
         Return View(p)
     End Function
+
     ' INDEX Partial
     Public Function IndexPartial() As ActionResult
-        Return View(liste)
-    End Function
-    ' DELETE Partial - affiche la confirmation
-    Public Function DeletePartial(id As Integer) As ActionResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        Return View(p)
+        Return View(_repo.GetAll())
     End Function
 
-    ' DELETE Partial - effectue la suppression
+    ' DELETE Partial
+    Public Function DeletePartial(id As Integer) As ActionResult
+        Return View(_repo.GetById(id))
+    End Function
+
     <HttpPost>
     <ActionName("DeletePartial")>
     Public Function DeletePartialConfirmed(id As Integer) As ActionResult
-        Dim p = liste.FirstOrDefault(Function(x) x.Id = id)
-        liste.Remove(p)
+        _repo.Delete(id)
         Return RedirectToAction("IndexPartial")
     End Function
+
 End Class
